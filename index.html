@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sorteador Loterias</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* VARIÁVEIS DE CORES E FONTES */
+    :root {
+        --fundo-geral: #eef2f8; /* Azul claro muito suave para o background geral */
+        --texto-principal: #2d3748; /* Cinza escuro para legibilidade */
+        --primaria-quina: #5e35b1; /* Roxo mais profundo e elegante */
+        --secundaria-quina: #8140e4; /* Roxo vibrante */
+        --accent-quina: #d2a8ff; /* Roxo claro para detalhes */
+        --sombra-clara: rgba(0, 0, 0, 0.08);
+        --sombra-media: rgba(0, 0, 0, 0.15);
+        --sombra-intensa: rgba(0, 0, 0, 0.25);
+        --transicao-suave: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        --borda-arredondada: 16px;
+    }
+
+    body.mega {
+        --primaria-loto: #00796b; /* Verde-água profundo para Mega */
+        --secundaria-loto: #00a896; /* Verde-água vibrante para Mega */
+        --accent-loto: #8edfc9; /* Verde-água claro */
+        background-color: #e8f5e9; /* Fundo mais suave para Mega */
+    }
+
+    body.quina {
+        --primaria-loto: var(--primaria-quina);
+        --secundaria-loto: var(--secundaria-quina);
+        --accent-loto: var(--accent-quina);
+        background-color: var(--fundo-geral);
+    }
+
+    /* ESTILOS GERAIS */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+        color: var(--texto-principal);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background-color: var(--fundo-geral); /* Fundo dinâmico via JS com temaAtual */
+        transition: background-color var(--transicao-suave);
+    }
+
+    /* HEADER */
+    header {
+        background: linear-gradient(135deg, var(--primaria-loto), var(--secundaria-loto)); /* Gradiente sutil */
+        color: white;
+        width: 100%;
+        padding: 1.5rem 1rem; /* Mais espaçamento */
+        text-align: center;
+        font-size: 2.2rem; /* Título maior e mais impactante */
+        font-weight: 700; /* Mais negrito */
+        box-shadow: 0 6px 12px var(--sombra-media); /* Sombra mais destacada */
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        border-radius: 0 0 var(--borda-arredondada) var(--borda-arredondada); /* Cantos inferiores arredondados */
+        letter-spacing: 0.05em; /* Espaçamento entre letras */
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2); /* Sombra no texto */
+        transition: background var(--transicao-suave);
+    }
+
+    /* MAIN CONTAINER */
+    main {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2.5rem 1.5rem; /* Mais padding interno */
+        width: 100%;
+        max-width: 1000px; /* Aumenta a largura máxima */
+        margin: 2.5rem auto; /* Centraliza com margem superior e inferior */
+        background-color: var(--branco);
+        border-radius: var(--borda-arredondada);
+        box-shadow: 0 12px 24px var(--sombra-intensa); /* Sombra mais proeminente e suave */
+        position: relative; /* Para z-index se necessário */
+    }
+
+    /* BUTTONS CONTAINER */
+    .btn-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.5rem; /* Aumenta o espaçamento entre os botões */
+        margin-bottom: 3rem; /* Mais espaço abaixo dos botões */
+    }
+
+    /* ESTILOS DOS BOTÕES GERAIS */
+    .btn-sortear, .btn-tema, .btn-salvar, .btn-limpar {
+        background: var(--secundaria-loto);
+        color: white;
+        border: none;
+        border-radius: 30px; /* Mais arredondado (pílula) */
+        padding: 1.3rem 3rem; /* Mais padding */
+        font-size: 1.2rem; /* Fonte um pouco maior */
+        cursor: pointer;
+        box-shadow: 0 5px 15px var(--sombra-clara); /* Sombra sutil */
+        transition: var(--transicao-suave);
+        font-weight: 600;
+        user-select: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        position: relative; /* Para efeitos de pseudo-elementos */
+        overflow: hidden; /* Para o efeito de hover */
+        min-width: 200px; /* Garante que botões não fiquem muito estreitos */
+    }
+
+    .btn-sortear:not(:disabled):hover, .btn-tema:hover, .btn-limpar:hover {
+        transform: translateY(-5px) scale(1.02); /* Efeito de elevação mais pronunciado */
+        box-shadow: 0 10px 20px var(--sombra-media);
+        background: var(--primaria-loto); /* Fundo primário no hover */
+    }
+    
+    .btn-sortear:disabled {
+        background-color: #cccccc; /* Cinza para desabilitado */
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+        opacity: 0.7;
+    }
+
+    /* EFEITO BRILHO NO HOVER */
+    .btn-sortear::before, .btn-tema::before, .btn-limpar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease-in-out;
+    }
+
+    .btn-sortear:not(:disabled):hover::before, .btn-tema:hover::before, .btn-limpar:hover::before {
+        left: 100%;
+    }
+
+    /* BOTÃO SALVAR SEQUÊNCIA - BRANCO COM CONTORNO E ÍCONE ORIGINAL */
+    .btn-salvar {
+        background-color: var(--branco); /* Fundo branco */
+        color: var(--primaria-loto); /* Cor do texto e contorno igual à primária */
+        border: 2px solid var(--primaria-loto); /* Contorno bonito */
+        font-weight: 700;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        justify-content: flex-start; /* Alinha conteúdo à esquerda */
+        padding-left: 1.5rem; /* Ajusta padding para o ícone */
+        text-align: left; /* Alinha o texto à esquerda (visual) */
+    }
+
+    .btn-salvar:hover {
+        background-color: var(--primaria-loto); /* Fundo primário no hover */
+        color: var(--branco); /* Texto branco no hover, embora o span vá sobrescrever */
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-salvar img {
+        width: 36px; /* SVG maior */
+        height: 36px; /* SVG maior */
+        margin-right: 0.8rem; /* Espaçamento entre ícone e texto */
+        filter: none; /* REMOVE QUALQUER FILTRO DE COR - DEIXA A COR ORIGINAL DO SVG */
+        transition: transform 0.2s ease, filter var(--transicao-suave); /* Adicionado transition para filter */
+        flex-shrink: 0; /* Garante que a imagem não encolha */
+    }
+
+    .btn-salvar:hover img {
+        transform: scale(1.1); /* Estrela cresce um pouco no hover */
+        filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%) !important; /* Estrela fica branca com !important */
+    }
+    
+    /* ESTILO DO TEXTO DENTRO DO BOTÃO SALVAR */
+    .btn-salvar-texto {
+        color: var(--primaria-loto); /* Cor padrão do texto (a mesma do contorno) */
+        transition: color var(--transicao-suave); /* Transição suave para a cor */
+    }
+
+    /* Quando o botão de salvar for ATIVADO/Clicado (foco ou active) */
+    .btn-salvar:active .btn-salvar-texto, 
+    .btn-salvar:focus .btn-salvar-texto {
+        color: var(--branco) !important; /* TEXTO FICA BRANCO com !important */
+    }
+
+    /* Mantenha o texto branco no hover também para consistência visual */
+    .btn-salvar:hover .btn-salvar-texto {
+        color: var(--branco) !important; /* TEXTO FICA BRANCO com !important */
+    }
+
+    /* Garante que a estrela fique branca nos estados ativo/foco */
+    .btn-salvar:active img, 
+    .btn-salvar:focus img {
+        filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%) !important; /* Estrela fica branca com !important */
+    }
+
+
+    /* BOTÃO LIMPAR FAVORITOS */
+    .btn-limpar {
+        background-color: #e74c3c; /* Vermelho vibrante */
+        margin-top: 2rem; /* Mais espaço acima do botão de limpar */
+        padding: 1rem 2.5rem; /* Menor que os outros, mas ainda com bom padding */
+        font-size: 1rem;
+        border-radius: 25px;
+    }
+    .btn-limpar:hover {
+        background-color: #c0392b; /* Vermelho mais escuro no hover */
+    }
+
+    /* NÚMEROS SORTEADOS */
+    .numeros {
+        margin-top: 2.5rem; /* Mais espaçamento */
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.5rem; /* Espaçamento maior entre as bolas */
+        min-height: 100px; /* Altura mínima maior para o resultado */
+        align-items: center;
+        padding: 1.5rem 1rem;
+        background-color: var(--fundo-geral); /* Fundo leve para o resultado */
+        border-radius: var(--borda-arredondada);
+        width: 100%;
+        margin-bottom: 3rem; /* Mais espaço abaixo do resultado */
+        box-shadow: inset 0 3px 8px rgba(0,0,0,0.08); /* Sombra interna mais suave */
+        border: 1px solid rgba(0,0,0,0.05); /* Borda sutil */
+    }
+
+    .bola {
+        background: linear-gradient(45deg, var(--primaria-loto), var(--secundaria-loto)); /* Gradiente nas bolas */
+        color: white;
+        font-weight: 800; /* Extra negrito */
+        font-size: 1.8rem; /* Bolas maiores */
+        width: 80px; /* Dimensão maior */
+        height: 80px; /* Dimensão maior */
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 12px var(--sombra-media); /* Sombra mais pronunciada */
+        user-select: none;
+        transition: var(--transicao-suave);
+        border: 2px solid rgba(255,255,255,0.5); /* Borda interna clara */
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* Sombra no texto do número */
+    }
+
+    .bola:hover {
+        transform: scale(1.15) rotate(5deg); /* Efeito maior e rotação no hover */
+        box-shadow: 0 10px 20px var(--sombra-intensa);
+    }
+
+    /* FAVORITOS CONTAINER */
+    .favoritos-container {
+        margin-top: 4rem; /* Mais espaço acima dos favoritos */
+        width: 100%;
+        text-align: center;
+        padding: 2rem; /* Mais padding */
+        border-top: 2px solid var(--accent-loto); /* Borda superior com cor de destaque */
+        background-color: #fcfdff; /* Fundo leve para a seção */
+        border-radius: var(--borda-arredondada);
+        box-shadow: inset 0 0 15px rgba(0,0,0,0.05); /* Sombra interna para a seção */
+    }
+
+    .favoritos-container h2 {
+        margin-bottom: 2rem; /* Mais espaço abaixo do título */
+        color: var(--primaria-loto);
+        font-size: 2.4rem; /* Título maior */
+        font-weight: 800; /* Extra negrito */
+        letter-spacing: 0.05em;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        transition: color var(--transicao-suave);
+    }
+
+    .lista-favoritos {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Espaçamento consistente entre os itens da lista */
+        max-height: 500px; /* Altura máxima ligeiramente maior */
+        overflow-y: auto;
+        padding: 1rem;
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: var(--borda-arredondada);
+        background-color: var(--fundo-geral); /* Fundo mais suave para a lista */
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .item-favorito {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.8rem; /* Espaçamento entre as bolas do item */
+        padding: 1rem;
+        background-color: var(--branco);
+        border-radius: 10px; /* Cantos arredondados para cada item */
+        box-shadow: 0 3px 8px rgba(0,0,0,0.08); /* Sombra mais destacada para os itens */
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .item-favorito:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 12px rgba(0,0,0,0.12);
+    }
+
+    .item-favorito .bola {
+        background: var(--secundaria-loto); /* Usa a cor secundária para diferenciação */
+        width: 55px; /* Bolas da lista um pouco maiores */
+        height: 55px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra leve para as bolas menores */
+        border: none; /* Remove borda extra */
+    }
+
+    .mensagem-vazio {
+        color: #888;
+        font-style: italic;
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        background-color: var(--cinza-claro);
+        border-radius: 10px;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    /* FOOTER */
+    footer {
+        margin-top: auto;
+        padding: 2rem 1rem; /* Mais padding */
+        font-size: 0.95rem; /* Fonte um pouco maior */
+        color: #666;
+        text-align: center;
+        width: 100%;
+        background-color: #dde1e7; /* Fundo para o footer */
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.08); /* Sombra mais destacada */
+        border-radius: var(--borda-arredondada) var(--borda-arredondada) 0 0; /* Cantos superiores arredondados */
+    }
+
+    /* RESPONSIVIDADE PARA CELULAR - FOCO NA DISTRIBUIÇÃO E ESPAÇOS */
+    @media (max-width: 768px) {
+        header {
+            font-size: 1.8rem;
+            padding: 1.2rem 0.8rem;
+        }
+
+        main {
+            padding: 1.5rem 1rem;
+            margin: 1.5rem auto;
+            border-radius: 12px;
+        }
+
+        .btn-container {
+            flex-direction: column; /* Botões um abaixo do outro em telas menores */
+            gap: 1.2rem; /* Mais espaçamento vertical entre os botões */
+            margin-bottom: 2.5rem; /* Ajusta espaço abaixo */
+        }
+
+        .btn-sortear, .btn-tema, .btn-salvar, .btn-limpar {
+            width: 90%; /* Ocupa mais largura */
+            max-width: 380px; /* Limita a largura para botões não ficarem gigantes em tablets */
+            margin: 0 auto; /* Centraliza */
+            padding: 1.1rem 2.2rem;
+            font-size: 1.1rem;
+            border-radius: 25px;
+        }
+        
+        .btn-salvar {
+            padding-left: 1.5rem; /* Mantém o alinhamento da estrela */
+        }
+
+        .btn-salvar img {
+            width: 32px; /* Ajusta o tamanho da estrela para celular */
+            height: 32px;
+            margin-right: 0.6rem;
+        }
+
+        .numeros {
+            gap: 1rem; /* Menor espaçamento entre as bolas */
+            padding: 1rem 0.5rem;
+            margin-bottom: 2.5rem; /* Ajusta espaço abaixo */
+        }
+
+        .bola {
+            width: 68px; /* Bolas um pouco menores para caber melhor */
+            height: 68px;
+            font-size: 1.6rem;
+        }
+
+        .favoritos-container {
+            padding: 1.5rem 1rem;
+            margin-top: 3.5rem; /* Ajusta espaço acima */
+        }
+
+        .favoritos-container h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .lista-favoritos {
+            padding: 0.8rem;
+            gap: 0.8rem; /* Ajusta espaçamento interno */
+        }
+
+        .item-favorito .bola {
+            width: 52px; /* Bolas de favorito um pouco menores */
+            height: 52px;
+            font-size: 1.1rem;
+            gap: 0.5rem;
+        }
+
+        footer {
+            padding: 1.5rem 0.8rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        header {
+            font-size: 1.4rem;
+            padding: 1rem 0.5rem;
+        }
+        
+        main {
+            padding: 1rem 0.5rem;
+            margin: 1.5rem auto;
+        }
+
+        .btn-sortear, .btn-tema, .btn-salvar, .btn-limpar {
+            font-size: 1.05rem; /* Fonte ligeiramente menor */
+            padding: 0.9rem 1.2rem; /* Mais compacto */
+            width: 95%; /* Ocupa quase toda a largura */
+        }
+
+        .btn-salvar img {
+            width: 28px; /* Estrela um pouco menor para celular */
+            height: 28px;
+            margin-right: 0.5rem;
+        }
+
+        .numeros {
+            gap: 0.7rem; /* Espaçamento menor */
+            padding: 0.7rem 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .bola {
+            width: 58px; /* Bolas menores */
+            height: 58px;
+            font-size: 1.3rem;
+        }
+
+        .favoritos-container h2 {
+            font-size: 1.8rem;
+        }
+        
+        .item-favorito .bola {
+            width: 45px;
+            height: 45px;
+            font-size: 1rem;
+        }
+
+        footer {
+            font-size: 0.8rem;
+            padding: 1rem 0.5rem;
+        }
+    }
+</style>
+</head>
+
+<body class="quina">
+  <header id="titulo">Sorteador Inteligente - Quina</header>
+  <main>
+    <div class="btn-container">
+      <button class="btn-tema" onclick="mudarTema()">Alternar Mega/Quina</button>
+      <button class="btn-sortear" onclick="sortear()">Sortear Números</button>
+    </div>
+
+    <div class="numeros" id="resultado"></div>
+<button class="btn-salvar" onclick="salvarFavorito()">
+    <img src="star.svg" alt="Ícone de Estrela" />
+    <span class="btn-salvar-texto">Salvar sequência</span>
+</button>
+
+    <div class="favoritos-container">
+        <h2>Minhas Sequências Favoritas</h2>
+        <div class="lista-favoritos" id="lista-favoritos">
+            </div>
+        <button class="btn-limpar" onclick="limparFavoritos()">Limpar Favoritos</button>
+    </div>
+  </main>
+  <footer>&copy; 2025 Copyrighting Guinamis</footer>
+
+  <script src="megadados.js"></script>  <script src="quinadados.js"></script> <script>
+    // Cole o código JavaScript da próxima seção aqui dentro
+  </script>
+</body>
+</html>
+
+  <script>
+
+// --- SCRIPT PRINCIPAL ---
+let temaAtual = 'quina'; // Tema inicial
+let numerosSorteadosAtuais = []; // Array para armazenar os números da última rodada
+
+// Variáveis que receberão os dados processados dos arquivos .js
+let historicoMega = [];
+let historicoQuina = [];
+let ultimoSorteioMega = []; // Para o parâmetro 16 da Mega
+let ultimoSorteioQuina = []; // Para o parâmetro 16 da Quina
+
+// Objeto para armazenar os resultados das análises
+let analiseResultados = {};
+
+
+// --- FUNÇÕES EXISTENTES ---
+
+function carregarFavoritos() {
+  const favoritosSalvos = JSON.parse(localStorage.getItem('numerosFavoritos')) || [];
+  const listaFavoritosDiv = document.getElementById('lista-favoritos');
+  listaFavoritosDiv.innerHTML = '';
+
+  if (favoritosSalvos.length === 0) {
+    listaFavoritosDiv.innerHTML = '<p class="mensagem-vazio">Nenhuma sequência favorita salva ainda.</p>';
+    return;
+  }
+
+  favoritosSalvos.forEach(sequencia => {
+    const itemFavoritoDiv = document.createElement('div');
+    itemFavoritoDiv.className = 'item-favorito';
+
+    sequencia.forEach(num => {
+      const bola = document.createElement('div');
+      bola.className = 'bola';
+      bola.textContent = num.toString().padStart(2, '0');
+      itemFavoritoDiv.appendChild(bola);
+    });
+    listaFavoritosDiv.appendChild(itemFavoritoDiv);
+  });
+}
+
+// --- FUNÇÃO PARA ATUALIZAR O ESTADO DO BOTÃO DE SORTEAR ---
+function atualizarEstadoBotaoSortear(habilitar) {
+    const btnSortear = document.querySelector('.btn-sortear');
+    if (btnSortear) {
+        btnSortear.disabled = !habilitar; // Desabilita se 'habilitar' for false, habilita se for true
+        if (habilitar) {
+            btnSortear.textContent = 'Sortear Números';
+        } else {
+            btnSortear.textContent = 'Carregando histórico...';
+        }
+    }
+}
+
+// --- FUNÇÃO PARA PROCESSAR DADOS DAS CONSTS GLOBAIS ---
+function processarDadosHistoricos() {
+    atualizarEstadoBotaoSortear(false); // Desabilita o botão ao iniciar o processamento
+    try {
+        console.log("Iniciando processamento do histórico a partir das variáveis globais...");
+
+        // Verifica se as constantes globais estão definidas
+        if (typeof rawSorteiosData1 === 'undefined' || typeof rawSorteiosData2 === 'undefined') {
+            throw new Error("Variáveis de dados históricos (rawSorteiosData1/2) não encontradas. Verifique se os scripts 'megadados.js' e 'quinadados.js' foram incluídos corretamente no index.html e se definem as constantes.");
+        }
+
+        // Processa dados da Mega-Sena
+        historicoMega = Object.entries(rawSorteiosData1)
+            .sort((a, b) => parseInt(a[0]) - parseInt(b[0])) // Ordena pelo número do concurso (chave)
+            .map(([concurso, dezenas]) => ({
+                concurso: parseInt(concurso),
+                data: null, // Data não disponível neste formato
+                numeros: dezenas.map(Number).sort((a, b) => a - b) // Converte para número e ordena as dezenas
+            }));
+
+        // Processa dados da Quina
+        historicoQuina = Object.entries(rawSorteiosData2)
+            .sort((a, b) => parseInt(a[0]) - parseInt(b[0])) // Ordena pelo número do concurso (chave)
+            .map(([concurso, dezenas]) => ({
+                concurso: parseInt(concurso),
+                data: null, // Data não disponível neste formato
+                numeros: dezenas.map(Number).sort((a, b) => a - b) // Converte para número e ordena as dezenas
+            }));
+
+        // Armazena o último sorteio para o Parâmetro 16
+        if (historicoMega.length > 0) {
+          ultimoSorteioMega = historicoMega[historicoMega.length - 1].numeros;
+        }
+        if (historicoQuina.length > 0) {
+          ultimoSorteioQuina = historicoQuina[historicoQuina.length - 1].numeros;
+        }
+
+        console.log(`✅ Histórico da Mega-Sena processado: ${historicoMega.length} sorteios.`);
+        console.log(`✅ Histórico da Quina processado: ${historicoQuina.length} sorteios.`);
+        console.log("Histórico carregado com sucesso! As análises agora estão disponíveis.");
+        atualizarEstadoBotaoSortear(true); // Habilita o botão após processamento
+    } catch (error) {
+        console.error("❌ Erro grave ao processar os dados históricos:", error);
+        alert(`Não foi possível carregar os dados históricos. As análises estatísticas não estarão disponíveis. Por favor, verifique se os arquivos 'megadados.js' e 'quinadados.js' estão na mesma pasta do 'index.html', se contêm as constantes 'rawSorteiosData1' e 'rawSorteiosData2' corretamente formatadas, e se foram incluídos ANTES do seu script principal no index.html. Detalhes: ${error.message}`);
+        historicoMega = [];
+        historicoQuina = [];
+        atualizarEstadoBotaoSortear(false); // Mantém o botão desabilitado em caso de erro
+    }
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  carregarFavoritos();
+  processarDadosHistoricos();
+});
+
+function mudarTema() {
+  const body = document.body;
+  temaAtual = temaAtual === 'quina' ? 'mega' : 'quina';
+  body.className = temaAtual;
+  document.getElementById('titulo').textContent = `Sorteador Inteligente - ${temaAtual.charAt(0).toUpperCase() + temaAtual.slice(1)}`;
+}
+
+// --- FUNÇÃO SORTEAR MODIFICADA ---
+function sortear() {
+  const resultadoDiv = document.getElementById('resultado');
+  resultadoDiv.innerHTML = '';
+  numerosSorteadosAtuais = [];
+
+  const limite = (temaAtual === 'mega') ? 60 : 80;
+  const quantidade = (temaAtual === 'mega') ? 6 : 5;
+
+  const numeros = new Set();
+  while (numeros.size < quantidade) {
+    const n = Math.floor(Math.random() * limite) + 1;
+    numeros.add(n);
+  }
+
+  numerosSorteadosAtuais = [...numeros].sort((a, b) => a - b);
+
+  numerosSorteadosAtuais.forEach(num => {
+    const bola = document.createElement('div');
+    bola.className = 'bola';
+    bola.textContent = num.toString().padStart(2, '0');
+    resultadoDiv.appendChild(bola);
+  });
+
+  if (historicoMega.length > 0 && historicoQuina.length > 0) {
+      realizarAnalises(numerosSorteadosAtuais, temaAtual);
+  } else {
+      console.warn("⚠️ O histórico de sorteios não foi carregado. Análises estatísticas não serão realizadas.");
+  }
+}
+
+function salvarFavorito() {
+  if (numerosSorteadosAtuais.length === 0) {
+    alert('Por favor, sorteie números antes de salvar uma sequência!');
+    return;
+  }
+
+  const favoritosSalvos = JSON.parse(localStorage.getItem('numerosFavoritos')) || [];
+
+  const sequenciaExiste = favoritosSalvos.some(fav =>
+    JSON.stringify(fav) === JSON.stringify(numerosSorteadosAtuais)
+  );
+
+  if (sequenciaExiste) {
+    alert('Essa sequência de números já está nas suas favoritas!');
+    return;
+  }
+
+  favoritosSalvos.push(numerosSorteadosAtuais);
+  localStorage.setItem('numerosFavoritos', JSON.stringify(favoritosSalvos));
+
+  alert('Sequência salva com sucesso!');
+  carregarFavoritos();
+}
+
+function limparFavoritos() {
+  if (confirm('Tem certeza que deseja limpar todas as suas sequências favoritas?')) {
+    localStorage.removeItem('numerosFavoritos');
+    carregarFavoritos();
+    alert('Todas as sequências favoritas foram removidas.');
+  }
+}
+
+// --- FUNÇÕES DE ANÁLISE ---
+
+/**
+ * Função principal para realizar todas as análises.
+ * @param {number[]} numerosSorteio - Os números sorteados na rodada atual.
+ * @param {string} loteria - 'mega' ou 'quina'.
+ */
+function realizarAnalises(numerosSorteio, loteria) {
+  const historicoCompleto = loteria === 'mega' ? historicoMega : historicoQuina;
+  const ultimoSorteioRef = loteria === 'mega' ? ultimoSorteioMega : ultimoSorteioQuina;
+  const limiteNumeros = (loteria === 'mega') ? 60 : 80;
+  const quantidadeNumeros = (loteria === 'mega') ? 6 : 5;
+
+  const historicoNumeros = historicoCompleto.map(s => s.numeros);
+
+  // Parâmetros 1-18 (existentes)
+  analiseResultados.frequenciaNumeros = calcularFrequenciaNumeros(historicoNumeros);
+  analiseResultados.topNumeros = obterNumerosMaisMenosSorteados(analiseResultados.frequenciaNumeros);
+  analiseResultados.ciclosIndividuais = calcularCiclosIndividuais(historicoNumeros);
+  analiseResultados.medianaSorteioAtual = calcularMediana(numerosSorteio);
+  analiseResultados.distanciaNumeros = calcularDistanciaNumeros(numerosSorteio);
+  analiseResultados.cicloSequenciaCompleta = verificarCicloSequenciaCompleta(numerosSorteio, historicoNumeros);
+  analiseResultados.medianaGlobalSequencias = calcularMedianaGlobalSequencias(historicoNumeros);
+  analiseResultados.tendenciaTemporal = analisarTendenciaTemporal(historicoCompleto); // Passa o objeto completo (com 'data: null')
+  analiseResultados.fibonacciCount = contarFibonacci(numerosSorteio);
+  analiseResultados.primosCount = contarPrimos(numerosSorteio);
+  analiseResultados.paridade = analisarParidade(numerosSorteio);
+  analiseResultados.proporcaoAurea = analisarProporcaoAurea(numerosSorteio);
+  analiseResultados.frequenciaPorPosicao = calcularFrequenciaPorPosicao(historicoNumeros, quantidadeNumeros);
+  analiseResultados.somaTotal = calcularSomaTotal(numerosSorteio);
+  analiseResultados.sequenciasConsecutivas = detectarSequenciasConsecutivas(numerosSorteio);
+  analiseResultados.repeticaoAnterior = compararComSorteioAnterior(numerosSorteio, ultimoSorteioRef);
+  analiseResultados.gapAnalysis = analisarGap(historicoNumeros, limiteNumeros);
+  analiseResultados.simetria = analisarSimetria(numerosSorteio);
+
+  // --- NOVOS PARÂMETROS AVANÇADOS (19-27) ---
+
+  // 19. Análise de Entropia (aleatoriedade por sorteio)
+  analiseResultados.entropiaHistorica = calcularEntropia(historicoNumeros, limiteNumeros);
+
+  // 20. Análise por agrupamento (Clustering K-means ou lógica fuzzy) - Implementação simplificada
+  analiseResultados.agrupamentoSorteioAtual = analisarAgrupamento(numerosSorteio, historicoNumeros, loteria);
+
+  // 21. Chance condicional (Ex: Se o 13 sai, qual a chance de sair o 17 no mesmo sorteio?)
+  // Exemplo: chance de 13 e 17 juntos no histórico da loteria atual
+  analiseResultados.chanceCondicionalExemplo = calcularChanceCondicional(13, 17, historicoNumeros);
+
+  // 22. Análise de frequência por par/trio fixo
+  analiseResultados.frequenciaParesTrios = analisarFrequenciaParesTrios(historicoNumeros, quantidadeNumeros);
+
+  // 23. Variação de salto
+  analiseResultados.variacaoSalto = analisarVariacaoSalto(numerosSorteio, historicoNumeros);
+
+  // 24. Identificação de sorteios fora do padrão
+  analiseResultados.sorteioForaDoPadrao = identificarSorteioForaDoPadrao(numerosSorteio, historicoNumeros, limiteNumeros);
+
+  // 25. Mapa térmico dos números por sorteio (dados para o mapa)
+  analiseResultados.mapaTermicoDados = gerarMapaTermicoDados(historicoNumeros, limiteNumeros);
+
+  // 26. Correlação com datas (adaptado para ausência de datas)
+  analiseResultados.correlacaoComDatas = analisarCorrelacaoComDatas(historicoCompleto); // Passa o objeto completo (com 'data: null')
+
+  // 27. Custom Score por combinação (Índice Guinamis)
+  analiseResultados.indiceGuinamis = calcularIndiceGuinamis(numerosSorteio, analiseResultados);
+
+
+  console.log("Resultados das Análises:", analiseResultados);
+  // Opcional: Chame a função para exibir na tela se você tiver a div #analise-output
+  // exibirAnalisesNaTela(analiseResultados);
+}
+
+// --- FUNÇÕES AUXILIARES PARA CADA PARÂMETRO (EXISTENTES E NOVAS) ---
+
+// Parâmetro 1: Frequência dos números
+function calcularFrequenciaNumeros(historicoNumeros) {
+  const frequencia = {};
+  historicoNumeros.forEach(sorteio => {
+    sorteio.forEach(num => {
+      frequencia[num] = (frequencia[num] || 0) + 1;
+    });
+  });
+  return frequencia;
+}
+
+// Parâmetro 2: Números mais e menos sorteados
+function obterNumerosMaisMenosSorteados(frequencia) {
+  const sorted = Object.entries(frequencia).sort(([, a], [, b]) => b - a);
+  return {
+    maisFrequentes: sorted.slice(0, 5).map(item => parseInt(item[0])),
+    menosFrequentes: sorted.slice(-5).map(item => parseInt(item[0]))
+  };
+}
+
+// Parâmetro 3: Ciclos individuais por número
+function calcularCiclosIndividuais(historicoNumeros) {
+  const ciclos = {};
+  const ultimoSorteioPorNumero = {}; // {numero: indiceDoUltimoSorteio}
+
+  historicoNumeros.forEach((sorteio, index) => {
+    sorteio.forEach(num => {
+      if (ultimoSorteioPorNumero[num] !== undefined) {
+        const gap = index - ultimoSorteioPorNumero[num];
+        ciclos[num] = (ciclos[num] || []);
+        ciclos[num].push(gap);
+      }
+      ultimoSorteioPorNumero[num] = index;
+    });
+  });
+
+  const resultado = {};
+  for (const num in ciclos) {
+    const gaps = ciclos[num];
+    const sum = gaps.reduce((acc, val) => acc + val, 0);
+    resultado[num] = sum / gaps.length;
+  }
+  return resultado;
+}
+
+// Parâmetro 4: Mediana dos números por sorteio
+function calcularMediana(numeros) {
+  const sorted = [...numeros].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) {
+    return (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+  return sorted[mid];
+}
+
+// Parâmetro 5: Distância entre os números sorteados
+function calcularDistanciaNumeros(numeros) {
+  const sorted = [...numeros].sort((a, b) => a - b);
+  const distancias = [];
+  for (let i = 1; i < sorted.length; i++) {
+    distancias.push(sorted[i] - sorted[i - 1]);
+  }
+  return distancias;
+}
+
+// Parâmetro 6: Ciclos de sequência completa (exemplo básico)
+function verificarCicloSequenciaCompleta(numerosSorteio, historicoNumeros) {
+  const sorteioStr = JSON.stringify(numerosSorteio);
+  const indicesRepeticao = [];
+  historicoNumeros.forEach((sorteioHistorico, index) => {
+    if (JSON.stringify(sorteioHistorico) === sorteioStr) {
+      indicesRepeticao.push(index);
+    }
+  });
+
+  if (indicesRepeticao.length > 0) {
+    return `Sequência completa já saiu ${indicesRepeticao.length} vez(es). Última vez no sorteio (índice) #${indicesRepeticao[indicesRepeticao.length - 1]}`;
+  }
+  return 'Sequência completa nunca saiu antes.';
+}
+
+// Parâmetro 7: Mediana global das sequências
+function calcularMedianaGlobalSequencias(historicoNumeros) {
+  const medianasDosSorteios = historicoNumeros.map(sorteio => calcularMediana(sorteio));
+  if (medianasDosSorteios.length === 0) {
+      return null;
+  }
+  return calcularMediana(medianasDosSorteios);
+}
+
+// Parâmetro 8: Tendência temporal (Adaptado para ausência de datas)
+function analisarTendenciaTemporal(historicoCompleto) {
+    // Como os dados não incluem a propriedade 'data', esta análise é limitada.
+    // Ela não pode analisar frequência por ano, mês, década.
+    return "Análise de tendência temporal limitada: Dados históricos não contêm informações de data de sorteio.";
+}
+
+// Parâmetro 9: Parâmetro divino™ (Sequência de Fibonacci)
+function isFibonacci(num) {
+  const isPerfectSquare = (x) => {
+    const s = Math.floor(Math.sqrt(x));
+    return (s * s === x);
+  };
+  return isPerfectSquare(5 * num * num + 4) || isPerfectSquare(5 * num * num - 4);
+}
+
+function contarFibonacci(numeros) {
+  return numeros.filter(num => isFibonacci(num)).length;
+}
+
+// Parâmetro 10: Presença de números primos
+function isPrimo(num) {
+  if (num <= 1) return false;
+  if (num <= 3) return true;
+  if (num % 2 === 0 || num % 3 === 0) return false;
+  for (let i = 5; i * i <= num; i = i + 6) {
+    if (num % i === 0 || num % (i + 2) === 0) return false;
+  }
+  return true;
+}
+
+function contarPrimos(numeros) {
+  return numeros.filter(num => isPrimo(num)).length;
+}
+
+// Parâmetro 11: Paridade (pares vs ímpares)
+function analisarParidade(numeros) {
+  let pares = 0;
+  let impares = 0;
+  numeros.forEach(num => {
+    if (num % 2 === 0) {
+      pares++;
+    } else {
+      impares++;
+    }
+  });
+  return { pares, impares };
+}
+
+// Parâmetro 12: Proporção áurea (Golden Ratio) - Exemplo simplificado
+function analisarProporcaoAurea(numeros) {
+  const sorted = [...numeros].sort((a, b) => a - b);
+  const goldenRatio = 1.6180339887;
+  const relacoes = [];
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i - 1] !== 0) {
+      relacoes.push(sorted[i] / sorted[i - 1]);
+    }
+  }
+  const proximoAurea = relacoes.filter(r => Math.abs(r - goldenRatio) < 0.1).length;
+  return { relacoes, proximoAurea, goldenRatio };
+}
+
+// Parâmetro 13: Frequência por posição
+function calcularFrequenciaPorPosicao(historicoNumeros, quantidadeNumeros) {
+  const frequenciaPosicao = Array.from({ length: quantidadeNumeros }, () => ({}));
+  historicoNumeros.forEach(sorteio => {
+    sorteio.forEach((num, index) => {
+      if (frequenciaPosicao[index]) {
+        frequenciaPosicao[index][num] = (frequenciaPosicao[index][num] || 0) + 1;
+      }
+    });
+  });
+  return frequenciaPosicao;
+}
+
+// Parâmetro 14: Soma total dos números por sorteio
+function calcularSomaTotal(numeros) {
+  return numeros.reduce((acc, num) => acc + num, 0);
+}
+
+// Parâmetro 15: Sequências consecutivas
+function detectarSequenciasConsecutivas(numeros) {
+  const sorted = [...numeros].sort((a, b) => a - b);
+  const sequencias = [];
+  let currentSeq = [];
+
+  for (let i = 0; i < sorted.length; i++) {
+    if (i === 0 || sorted[i] === sorted[i - 1] + 1) {
+      currentSeq.push(sorted[i]);
+    } else {
+      if (currentSeq.length >= 2) {
+        sequencias.push(currentSeq);
+      }
+      currentSeq = [sorted[i]];
+    }
+  }
+  if (currentSeq.length >= 2) {
+    sequencias.push(currentSeq);
+  }
+  return sequencias;
+}
+
+// Parâmetro 16: Repetição do sorteio anterior
+function compararComSorteioAnterior(numerosAtuais, sorteioAnterior) {
+    if (!sorteioAnterior || sorteioAnterior.length === 0) {
+        return 0;
+    }
+    const setAnterior = new Set(sorteioAnterior);
+    let repeticoes = 0;
+    numerosAtuais.forEach(num => {
+        if (setAnterior.has(num)) {
+            repeticoes++;
+        }
+    });
+    return repeticoes;
+}
+
+// Parâmetro 17: Gap Analysis (números atrasados)
+function analisarGap(historicoNumeros, limiteNumeros) {
+  const todosNumeros = Array.from({ length: limiteNumeros }, (_, i) => i + 1);
+  const ultimasAparicoes = {};
+
+  historicoNumeros.forEach((sorteio, index) => {
+    sorteio.forEach(num => {
+      ultimasAparicoes[num] = index;
+    });
+  });
+
+  const numerosAtrasados = {};
+  const ultimoIndiceSorteio = historicoNumeros.length - 1;
+
+  todosNumeros.forEach(num => {
+    if (ultimasAparicoes[num] !== undefined) {
+      numerosAtrasados[num] = ultimoIndiceSorteio - ultimasAparicoes[num];
+    } else {
+      numerosAtrasados[num] = ultimoIndiceSorteio + 1;
+    }
+  });
+
+  const sortedAtrasados = Object.entries(numerosAtrasados).sort(([, a], [, b]) => b - a);
+  return sortedAtrasados.slice(0, 10).map(item => ({ numero: parseInt(item[0]), atraso: item[1] }));
+}
+
+// Parâmetro 18: Análise de simetria
+function analisarSimetria(numeros) {
+  const sorted = [...numeros].sort((a, b) => a - b);
+  const n = sorted.length;
+
+  if (n < 2) return 'Não aplicável para menos de 2 números.';
+
+  const primeiro = sorted[0];
+  const ultimo = sorted[n - 1];
+  const centroRange = (primeiro + ultimo) / 2;
+
+  let numsMenoresQueCentro = 0;
+  let numsMaioresQueCentro = 0;
+
+  sorted.forEach(num => {
+      if (num < centroRange) {
+          numsMenoresQueCentro++;
+      } else if (num > centroRange) {
+          numsMaioresQueCentro++;
+      }
+  });
+
+  if (Math.abs(numsMenoresQueCentro - numsMaioresQueCentro) <= 1) {
+      return `A sequência está bem balanceada em torno do seu centro de ${centroRange.toFixed(2)}.`;
+  } else {
+      return `A sequência está desbalanceada em torno do seu centro de ${centroRange.toFixed(2)}.`;
+  }
+}
+
+// --- NOVAS FUNÇÕES PARA OS PARÂMETROS AVANÇADOS (19-27) ---
+
+// 19. Análise de Entropia (aleatoriedade da distribuição histórica)
+function calcularEntropia(historicoNumeros, limiteNumeros) {
+    const frequenciaTotal = {};
+    let totalNumerosSorteados = 0;
+
+    historicoNumeros.forEach(sorteio => {
+        sorteio.forEach(num => {
+            frequenciaTotal[num] = (frequenciaTotal[num] || 0) + 1;
+            totalNumerosSorteados++;
+        });
+    });
+
+    if (totalNumerosSorteados === 0) return 0;
+
+    let entropia = 0;
+    for (let i = 1; i <= limiteNumeros; i++) {
+        const p = (frequenciaTotal[i] || 0) / totalNumerosSorteados;
+        if (p > 0) {
+            entropia -= p * Math.log2(p);
+        }
+    }
+    return entropia.toFixed(4); // Retorna a entropia com 4 casas decimais
+}
+
+// 20. Análise por agrupamento (Lógica Fuzzy simplificada para o sorteio atual)
+function analisarAgrupamento(numerosSorteio, historicoNumeros, loteria) {
+    const paridade = analisarParidade(numerosSorteio);
+    const soma = calcularSomaTotal(numerosSorteio);
+    const primos = contarPrimos(numerosSorteio);
+    const consecutivos = detectarSequenciasConsecutivas(numerosSorteio).length > 0;
+
+    // Calcular médias históricas para comparação
+    const historicoSomas = historicoNumeros.map(s => calcularSomaTotal(s));
+    const mediaSomaHistorica = historicoSomas.reduce((a, b) => a + b, 0) / historicoSomas.length;
+    const desvioPadraoSoma = Math.sqrt(historicoSomas.map(x => Math.pow(x - mediaSomaHistorica, 2)).reduce((a, b) => a + b, 0) / historicoSomas.length);
+
+    let classificacao = [];
+
+    if (paridade.pares > paridade.impares + 1) {
+        classificacao.push("Maioria Par");
+    } else if (paridade.impares > paridade.pares + 1) {
+        classificacao.push("Maioria Ímpar");
+    } else {
+        classificacao.push("Paridade Equilibrada");
+    }
+
+    if (soma < mediaSomaHistorica - desvioPadraoSoma) {
+        classificacao.push("Soma Baixa");
+    } else if (soma > mediaSomaHistorica + desvioPadraoSoma) {
+        classificacao.push("Soma Alta");
+    } else {
+        classificacao.push("Soma Média");
+    }
+
+    if (primos > (loteria === 'mega' ? 2 : 1)) { // Média de primos na Mega/Quina
+        classificacao.push("Muitos Primos");
+    }
+    if (consecutivos) {
+        classificacao.push("Contém Sequências Consecutivas");
+    }
+
+    return classificacao.join(", ") || "Padrão Indefinido";
+}
+
+// 21. Chance condicional (P(num2 | num1))
+function calcularChanceCondicional(num1, num2, historicoNumeros) {
+    let countNum1 = 0;
+    let countNum1AndNum2 = 0;
+
+    historicoNumeros.forEach(sorteio => {
+        const sorteioSet = new Set(sorteio);
+        if (sorteioSet.has(num1)) {
+            countNum1++;
+            if (sorteioSet.has(num2)) {
+                countNum1AndNum2++;
+            }
+        }
+    });
+
+    if (countNum1 === 0) return `O número ${num1} nunca saiu no histórico.`;
+    
+    const chance = (countNum1AndNum2 / countNum1) * 100;
+    return `${chance.toFixed(2)}% de chance de ${num2} sair junto com ${num1}. (Baseado em ${countNum1} ocorrências de ${num1})`;
+}
+
+// 22. Análise de frequência por par/trio fixo
+function analisarFrequenciaParesTrios(historicoNumeros, quantidadeNumeros) {
+    const frequenciaPares = {};
+    const frequenciaTrios = {};
+
+    historicoNumeros.forEach(sorteio => {
+        const sortedDraw = [...sorteio].sort((a, b) => a - b);
+        
+        // Pares
+        for (let i = 0; i < sortedDraw.length - 1; i++) {
+            for (let j = i + 1; j < sortedDraw.length; j++) {
+                const par = `${sortedDraw[i].toString().padStart(2, '0')}-${sortedDraw[j].toString().padStart(2, '0')}`;
+                frequenciaPares[par] = (frequenciaPares[par] || 0) + 1;
+            }
+        }
+
+        // Trios (se a quantidade de números permitir)
+        if (quantidadeNumeros >= 3) {
+            for (let i = 0; i < sortedDraw.length - 2; i++) {
+                for (let j = i + 1; j < sortedDraw.length - 1; j++) {
+                    for (let k = j + 1; k < sortedDraw.length; k++) {
+                        const trio = `${sortedDraw[i].toString().padStart(2, '0')}-${sortedDraw[j].toString().padStart(2, '0')}-${sortedDraw[k].toString().padStart(2, '0')}`;
+                        frequenciaTrios[trio] = (frequenciaTrios[trio] || 0) + 1;
+                    }
+                }
+            }
+        }
+    });
+
+    const sortedPares = Object.entries(frequenciaPares).sort(([, a], [, b]) => b - a);
+    const sortedTrios = Object.entries(frequenciaTrios).sort(([, a], [, b]) => b - a);
+
+    return {
+        top5Pares: sortedPares.slice(0, 5),
+        top5Trios: sortedTrios.slice(0, 5)
+    };
+}
+
+// 23. Variação de salto (para o sorteio atual e média histórica)
+function analisarVariacaoSalto(numerosSorteio, historicoNumeros) {
+    const calcularSaltos = (arr) => {
+        const sorted = [...arr].sort((a, b) => a - b);
+        const saltos = [];
+        for (let i = 1; i < sorted.length; i++) {
+            saltos.push(sorted[i] - sorted[i - 1]);
+        }
+        return saltos;
+    };
+
+    const saltosSorteioAtual = calcularSaltos(numerosSorteio);
+    const mediaSaltoAtual = saltosSorteioAtual.reduce((sum, val) => sum + val, 0) / saltosSorteioAtual.length || 0;
+
+    const todosSaltosHistoricos = [];
+    historicoNumeros.forEach(sorteio => {
+        todosSaltosHistoricos.push(...calcularSaltos(sorteio));
+    });
+
+    const mediaSaltoHistorica = todosSaltosHistoricos.reduce((sum, val) => sum + val, 0) / todosSaltosHistoricos.length || 0;
+    const desvioPadraoSaltos = Math.sqrt(todosSaltosHistoricos.map(x => Math.pow(x - mediaSaltoHistorica, 2)).reduce((a, b) => a + b, 0) / todosSaltosHistoricos.length || 0);
+
+    let classificacao = "Média";
+    if (mediaSaltoAtual > mediaSaltoHistorica + desvioPadraoSaltos) {
+        classificacao = "Alta (números mais dispersos)";
+    } else if (mediaSaltoAtual < mediaSaltoHistorica - desvioPadraoSaltos) {
+        classificacao = "Baixa (números mais concentrados)";
+    }
+
+    return {
+        saltosSorteioAtual: saltosSorteioAtual,
+        mediaSaltoAtual: mediaSaltoAtual.toFixed(2),
+        mediaSaltoHistorica: mediaSaltoHistorica.toFixed(2),
+        desvioPadraoSaltosHistorico: desvioPadraoSaltos.toFixed(2),
+        classificacao: classificacao
+    };
+}
+
+// 24. Identificação de sorteios fora do padrão
+function identificarSorteioForaDoPadrao(numerosSorteio, historicoNumeros, limiteNumeros) {
+    const alertas = [];
+
+    // Soma
+    const somaAtual = calcularSomaTotal(numerosSorteio);
+    const historicoSomas = historicoNumeros.map(s => calcularSomaTotal(s));
+    const mediaSomaHistorica = historicoSomas.reduce((a, b) => a + b, 0) / historicoSomas.length;
+    const desvioPadraoSoma = Math.sqrt(historicoSomas.map(x => Math.pow(x - mediaSomaHistorica, 2)).reduce((a, b) => a + b, 0) / historicoSomas.length);
+    
+    if (somaAtual < mediaSomaHistorica - (2 * desvioPadraoSoma)) { // 2 desvios padrão
+        alertas.push(`Soma muito baixa (${somaAtual}).`);
+    } else if (somaAtual > mediaSomaHistorica + (2 * desvioPadraoSoma)) {
+        alertas.push(`Soma muito alta (${somaAtual}).`);
+    }
+
+    // Paridade
+    const paridade = analisarParidade(numerosSorteio);
+    if (paridade.pares === numerosSorteio.length || paridade.impares === numerosSorteio.length) {
+        alertas.push(`Todos os números são ${paridade.pares === numerosSorteio.length ? 'Pares' : 'Ímpares'}.`);
+    } else if (paridade.pares === 0 || paridade.impares === 0) {
+         alertas.push(`Ausência de números ${paridade.pares === 0 ? 'Pares' : 'Ímpares'}.`);
+    }
+
+    // Sequências Consecutivas
+    const sequencias = detectarSequenciasConsecutivas(numerosSorteio);
+    if (sequencias.some(seq => seq.length >= 3)) { // Trio ou mais
+        alertas.push(`Contém sequência de ${sequencias[0].length} números consecutivos (${sequencias[0].join('-')}).`);
+    }
+
+    // Gap Analysis (se o sorteio atual contém números muito atrasados do histórico)
+    const topAtrasadosHistorico = analisarGap(historicoNumeros, limiteNumeros);
+    const numerosSorteioSet = new Set(numerosSorteio);
+    const temAtrasadoNoTop5 = topAtrasadosHistorico.slice(0,5).some(atrasado => numerosSorteioSet.has(atrasado.numero));
+    if (temAtrasadoNoTop5) {
+        alertas.push("Contém um ou mais números que estavam entre os 5 mais atrasados historicamente.");
+    }
+
+    return alertas.length > 0 ? alertas : "Nenhum padrão anômalo detectado.";
+}
+
+// 25. Mapa térmico dos números por sorteio (dados de frequência para visualização)
+function gerarMapaTermicoDados(historicoNumeros, limiteNumeros) {
+    const frequencia = calcularFrequenciaNumeros(historicoNumeros);
+    const mapa = {}; // { numero: frequencia }
+
+    for (let i = 1; i <= limiteNumeros; i++) {
+        mapa[i] = frequencia[i] || 0;
+    }
+    return mapa; // Pode ser visualizado como um heatmap onde a cor representa a frequência
+}
+
+// 26. Correlação com datas (Adaptado para ausência de datas)
+function analisarCorrelacaoComDatas(historicoCompleto) {
+    // Como os objetos de sorteio não contêm a propriedade 'data' real,
+    // esta análise não pode ser realizada com base em datas específicas.
+    if (!historicoCompleto || historicoCompleto.length === 0 || historicoCompleto[0].data !== null) {
+        // Se por algum motivo o formato mudar e data existir, podemos tentar analisar.
+        // Mas com 'data: null' como padrão, a análise é impossível.
+        return "Análise de correlação com datas limitada: Dados históricos não contêm informações de data de sorteio.";
+    }
+    return "Análise de correlação com datas não aplicável com o formato de dados atual (sem datas).";
+}
+
+// 27. Custom Score por combinação (Índice Guinamis)
+function calcularIndiceGuinamis(numerosSorteio, analiseResultados) {
+    let score = 0;
+    const maxScore = 100; // Pontuação máxima para referência
+
+    // Componentes do score:
+    // 1. Frequência dos números sorteados (média de frequência histórica)
+    const frequenciasNumerosSorteio = numerosSorteio.map(num => analiseResultados.frequenciaNumeros[num] || 0);
+    const mediaFrequencia = frequenciasNumerosSorteio.reduce((a, b) => a + b, 0) / frequenciasNumerosSorteio.length;
+    // Normaliza a média de frequência (ex: 0 a 10)
+    // Assumindo que a frequência máxima pode ser ~historicoNumeros.length
+    const maxFreqPossivel = analiseResultados.frequenciaNumeros ? Math.max(...Object.values(analiseResultados.frequenciaNumeros)) : 1;
+    score += (mediaFrequencia / maxFreqPossivel) * 20; // Peso 20
+
+    // 2. Presença de primos (quanto mais, melhor)
+    score += analiseResultados.primosCount * 5; // Peso 5 por primo
+
+    // 3. Proximidade com Fibonacci (quanto mais, melhor)
+    score += analiseResultados.fibonacciCount * 5; // Peso 5 por Fibonacci
+
+    // 4. Paridade Equilibrada (mais pontos se for ~50/50)
+    const { pares, impares } = analiseResultados.paridade;
+    const diffParidade = Math.abs(pares - impares);
+    score += Math.max(0, 10 - diffParidade * 2); // Pontua menos quanto maior a diferença (peso 10)
+
+    // 5. Soma equilibrada (próximo da média histórica)
+    const somaAtual = analiseResultados.somaTotal;
+    const mediaSomaHistorica = analiseResultados.agrupamentoSorteioAtual.includes("Soma Média") ? somaAtual : (analiseResultados.agrupamentoSorteioAtual.includes("Soma Baixa") ? -1 : 1); // Simplificado
+    // Para uma pontuação mais precisa, precisaríamos da média histórica da soma aqui.
+    // Como a média e desvio padrão da soma já são calculados em analisarAgrupamento, podemos usar.
+    // (Requer um pequeno ajuste para passar esses valores para cá ou calcular novamente)
+    // Por simplicidade, se soma está na média, ganha pontos.
+    if (analiseResultados.agrupamentoSorteioAtual.includes("Soma Média")) {
+        score += 15; // Peso 15
+    }
+
+    // 6. Ausência de sorteios fora do padrão (mais pontos se não for anômalo)
+    if (analiseResultados.sorteioForaDoPadrao === "Nenhum padrão anômalo detectado.") {
+        score += 10; // Peso 10
+    } else {
+        score -= 5; // Penaliza se for anômalo
+    }
+
+    // 7. Variação de Salto (mais pontos se for média)
+    if (analiseResultados.variacaoSalto.classificacao === "Média") {
+        score += 5; // Peso 5
+    }
+
+    // Limitar score para não ultrapassar maxScore e não ser negativo
+    score = Math.max(0, Math.min(score, maxScore));
+
+    return `${score.toFixed(2)} / ${maxScore} (Índice Guinamis)`;
+}
+
+
+// Opcional: Função para exibir as análises na tela
+
+function exibirAnalisesNaTela(resultados) {
+  const outputDiv = document.getElementById('analise-output');
+  if (!outputDiv) {
+    console.warn("Elemento #analise-output não encontrado. Crie um no seu HTML para exibir as análises.");
+    return;
+  }
+  let htmlContent = '<h3>Insights da Análise:</h3><ul>';
+  for (const key in resultados) {
+    let valor = resultados[key];
+    if (typeof valor === 'object' && valor !== null && !Array.isArray(valor)) {
+        valor = JSON.stringify(valor, null, 2);
+    } else if (Array.isArray(valor)) {
+        valor = JSON.stringify(valor);
+    }
+    htmlContent += `<li><strong>${key}:</strong> <pre>${valor}</pre></li>`;
+  }
+  htmlContent += '</ul>';
+  outputDiv.innerHTML = htmlContent;
+}
+
+  </script>
+</body>
+</html>
